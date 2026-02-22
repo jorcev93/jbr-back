@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { Cuenta } from '../usuarios/entities/cuenta.entity';
 import { Persona } from '../usuarios/entities/persona.entity';
+import { Rol } from '../usuarios/entities/rol.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { RegisterDto, LoginDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,6 +22,8 @@ export class AuthService {
     private cuentaRepository: Repository<Cuenta>,
     @InjectRepository(Persona)
     private personaRepository: Repository<Persona>,
+    @InjectRepository(Rol)
+    private rolRepository: Repository<Rol>,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
@@ -39,10 +42,15 @@ export class AuthService {
       throw new ConflictException('El email ya está registrado');
     }
 
+    const rolUser = await this.rolRepository.findOne({
+      where: { nombre: 'user', estado: true },
+    });
+
     const persona = this.personaRepository.create({
       nombre,
       apellido,
       genero,
+      ...(rolUser && { rolId: rolUser.id }),
       ...(fechaNacimiento && { fechaNacimiento: new Date(fechaNacimiento) }),
     });
 

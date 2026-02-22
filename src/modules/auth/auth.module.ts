@@ -9,10 +9,11 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { Cuenta } from '../usuarios/entities/cuenta.entity';
 import { Persona } from '../usuarios/entities/persona.entity';
+import { Rol } from '../usuarios/entities/rol.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Cuenta, Persona, RefreshToken]),
+    TypeOrmModule.forFeature([Cuenta, Persona, RefreshToken, Rol]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
