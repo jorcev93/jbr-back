@@ -51,6 +51,7 @@ async function bootstrap() {
     .addTag('Condiciones de Cultivo', 'Condiciones de cultivo de las plantas')
     .addTag('Morfología', 'Características morfológicas')
     .addTag('Fotos', 'Galería de fotos de plantas')
+    .addTag('Seed', 'Datos iniciales (rol y usuario administrador)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
