@@ -14,6 +14,7 @@ import { TaxonomiaModule } from './modules/taxonomia/taxonomia.module';
 import { CondicionCultivoModule } from './modules/condicion-cultivo/condicion-cultivo.module';
 import { MorfologiaModule } from './modules/morfologia/morfologia.module';
 import { FotosModule } from './modules/fotos/fotos.module';
+import { SeedModule } from './modules/seed/seed.module';
 
 // Guards
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -47,6 +48,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     CondicionCultivoModule,
     MorfologiaModule,
     FotosModule,
+    SeedModule,
   ],
   providers: [
     {
