@@ -9,8 +9,8 @@ import { Cuenta } from '../usuarios/entities/cuenta.entity';
 
 const ROLES_SEED = ['admin', 'user'] as const;
 const ROL_ADMIN = 'admin';
-const ADMIN_NOMBRE_DEFAULT = 'Admin';
-const ADMIN_APELLIDO_DEFAULT = 'Sistema';
+const ADMIN_NOMBRE_DEFAULT = 'Jorge';
+const ADMIN_APELLIDO_DEFAULT = 'Cevallos';
 
 @Injectable()
 export class SeedService {
@@ -29,9 +29,9 @@ export class SeedService {
     admin: { email: string; nombre: string; rol: string };
   }> {
     const email: string =
-      this.configService.get<string>('SEED_ADMIN_EMAIL') || 'admin@jbre.local';
+      this.configService.get<string>('SEED_ADMIN_EMAIL') || 'jorge@test.com';
     const password: string =
-      this.configService.get<string>('SEED_ADMIN_PASSWORD') || 'Admin123!';
+      this.configService.get<string>('SEED_ADMIN_PASSWORD') || 'Jorge123';
     const nombre: string =
       this.configService.get<string>('SEED_ADMIN_NOMBRE') ||
       ADMIN_NOMBRE_DEFAULT;
@@ -71,10 +71,10 @@ export class SeedService {
     });
     const personaGuardada = await this.personaRepository.save(persona);
 
-    const contrasenaHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
     const cuenta = this.cuentaRepository.create({
       email,
-      contrasena: contrasenaHash,
+      password: passwordHash,
       personaId: personaGuardada.id,
     });
     await this.cuentaRepository.save(cuenta);
