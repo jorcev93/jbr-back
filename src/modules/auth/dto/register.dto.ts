@@ -18,7 +18,7 @@ export class RegisterDto {
   @IsString()
   @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
   @MaxLength(50)
-  contrasena!: string;
+  password!: string;
 
   @ApiProperty({ example: 'Juan' })
   @IsString()

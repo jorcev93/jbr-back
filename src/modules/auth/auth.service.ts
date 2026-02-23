@@ -31,7 +31,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    const { email, contrasena, nombre, apellido, genero, fechaNacimiento } =
+    const { email, password, nombre, apellido, genero, fechaNacimiento } =
       registerDto;
 
     const existingCuenta = await this.cuentaRepository.findOne({
@@ -56,11 +56,11 @@ export class AuthService {
 
     await this.personaRepository.save(persona);
 
-    const hashedPassword = await bcrypt.hash(contrasena, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const cuenta = this.cuentaRepository.create({
       email,
-      contrasena: hashedPassword,
+      password: hashedPassword,
       personaId: persona.id,
     });
 
@@ -75,7 +75,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, contrasena } = loginDto;
+    const { email, password } = loginDto;
 
     const cuenta = await this.cuentaRepository.findOne({
       where: { email, estado: true },
@@ -86,7 +86,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const isPasswordValid = await bcrypt.compare(contrasena, cuenta.contrasena);
+    const isPasswordValid = await bcrypt.compare(password, cuenta.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Credenciales inválidas');

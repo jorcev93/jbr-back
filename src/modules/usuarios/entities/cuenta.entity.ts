@@ -13,7 +13,7 @@ export class Cuenta extends BaseEntity {
 
   @Exclude()
   @Column()
-  contrasena!: string;
+  password!: string;
 
   @Column()
   personaId!: string;
