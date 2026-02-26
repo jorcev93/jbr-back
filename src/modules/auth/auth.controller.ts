@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
@@ -54,5 +54,20 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Todas las sesiones cerradas' })
   logoutAll(@GetUser() user: Cuenta) {
     return this.authService.logoutAll(user.id);
+  }
+
+  @Get('check-status')
+  @ApiOperation({ summary: 'Verificar estado del token' })
+  @ApiResponse({ status: 200, description: 'Token válido' })
+  @ApiResponse({ status: 401, description: 'Token inválido o expirado' })
+  checkStatus(@GetUser() user: Cuenta) {
+    return {
+      valid: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        persona: user.persona,
+      },
+    };
   }
 }
