@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Planta } from './entities/planta.entity';
 import { CreatePlantaDto, UpdatePlantaDto } from './dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class PlantasService {
@@ -16,11 +17,21 @@ export class PlantasService {
     return this.plantaRepository.save(planta);
   }
 
-  async findAll(seccionId?: string) {
+  async findAll(paginationDto: PaginationDto, seccionId?: string) {
+    const { limit = 10, offset = 0 } = paginationDto;
+
     const query = this.plantaRepository
       .createQueryBuilder('planta')
       .leftJoinAndSelect('planta.seccion', 'seccion')
-      .where('planta.estado = :estado', { estado: true });
+      .leftJoinAndSelect('planta.taxonomia', 'taxonomia')
+      .leftJoinAndSelect('planta.datosGenerales', 'datosGenerales')
+      .leftJoinAndSelect('planta.condicionCultivo', 'condicionCultivo')
+      .leftJoinAndSelect('planta.morfologia', 'morfologia')
+      .leftJoinAndSelect('planta.registrosIngreso', 'registrosIngreso')
+      .leftJoinAndSelect('registrosIngreso.persona', 'persona')
+      .where('planta.estado = :estado', { estado: true })
+      .take(limit)
+      .skip(offset);
 
     if (seccionId) {
       query.andWhere('planta.seccionId = :seccionId', { seccionId });
