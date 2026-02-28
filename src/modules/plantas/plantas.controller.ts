@@ -17,6 +17,7 @@ import {
 import { PlantasService } from './plantas.service';
 import { CreatePlantaDto, UpdatePlantaDto } from './dto';
 import { UuidValidationPipe } from '../../common/pipes/uuid-validation.pipe';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Plantas')
 @ApiBearerAuth()
@@ -32,9 +33,14 @@ export class PlantasController {
 
   @Get()
   @ApiOperation({ summary: 'Listar plantas' })
-  @ApiQuery({ name: 'seccionId', required: false })
-  findAll(@Query('seccionId') seccionId?: string) {
-    return this.plantasService.findAll(seccionId);
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  @ApiQuery({ name: 'seccionId', required: false, type: String })
+  findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query('seccionId') seccionId?: string,
+  ) {
+    return this.plantasService.findAll(paginationDto, seccionId);
   }
 
   @Get('search')
