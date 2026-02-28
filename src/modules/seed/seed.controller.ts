@@ -1,4 +1,4 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { SeedService } from './seed.service';
@@ -22,5 +22,16 @@ export class SeedController {
   })
   run() {
     return this.seedService.run();
+  }
+
+  @Public()
+  @Delete()
+  @ApiOperation({
+    summary: 'Limpiar la base de datos',
+    description: 'Elimina todos los registros de la base de datos de manera segura.',
+  })
+  @ApiResponse({ status: 200, description: 'Base de datos limpiada correctamente' })
+  clearDatabase() {
+    return this.seedService.clearDatabase();
   }
 }
