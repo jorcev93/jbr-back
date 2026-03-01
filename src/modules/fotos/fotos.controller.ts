@@ -7,11 +7,12 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -70,6 +71,51 @@ export class FotosController {
     @Body() createFotoDto: CreateFotoDto,
   ) {
     return this.fotosService.create(plantaId, file, createFotoDto);
+  }
+
+  @Post('planta/:plantaId/multiple')
+  @ApiOperation({ summary: 'Subir múltiples fotos para una planta' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+        descripcion: {
+          type: 'string',
+        },
+        tipo: {
+          type: 'string',
+          enum: ['flor', 'hoja', 'fruto', 'tallo', 'raiz', 'general'],
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: memoryStorage(),
+    }),
+  )
+  createMultiple(
+    @Param('plantaId', UuidValidationPipe) plantaId: string,
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|webp)$/ }),
+        ],
+      }),
+    )
+    files: Express.Multer.File[],
+    @Body() createFotoDto: CreateFotoDto,
+  ) {
+    return this.fotosService.createMultiple(plantaId, files, createFotoDto);
   }
 
   @Get('planta/:plantaId')

@@ -33,6 +33,28 @@ export class FotosService {
     return this.fotoRepository.save(foto);
   }
 
+  async createMultiple(
+    plantaId: string,
+    files: Express.Multer.File[],
+    createFotoDto: CreateFotoDto,
+  ) {
+    const fotos: Foto[] = [];
+
+    for (const file of files) {
+      const result = await this.storageService.upload(file);
+      const foto = this.fotoRepository.create({
+        plantaId,
+        nombre: result.key,
+        ruta: result.url,
+        descripcion: createFotoDto.descripcion,
+        tipo: createFotoDto.tipo,
+      });
+      fotos.push(foto);
+    }
+
+    return this.fotoRepository.save(fotos);
+  }
+
   async findByPlanta(plantaId: string) {
     return this.fotoRepository.find({
       where: { plantaId },
