@@ -1,16 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Foto } from './entities/foto.entity';
 import { CreateFotoDto } from './dto';
-import * as fs from 'fs';
-import * as path from 'path';
+import { STORAGE_SERVICE } from '../../common/storage';
+import type { StorageService } from '../../common/storage';
 
 @Injectable()
 export class FotosService {
   constructor(
     @InjectRepository(Foto)
     private fotoRepository: Repository<Foto>,
+    @Inject(STORAGE_SERVICE)
+    private storageService: StorageService,
   ) {}
 
   async create(
@@ -18,10 +20,12 @@ export class FotosService {
     file: Express.Multer.File,
     createFotoDto: CreateFotoDto,
   ) {
+    const result = await this.storageService.upload(file);
+
     const foto = this.fotoRepository.create({
       plantaId,
-      nombre: file.filename,
-      ruta: `/uploads/${file.filename}`,
+      nombre: result.key,
+      ruta: result.url,
       descripcion: createFotoDto.descripcion,
       tipo: createFotoDto.tipo,
     });
@@ -51,11 +55,8 @@ export class FotosService {
   async remove(id: string) {
     const foto = await this.findOne(id);
 
-    // Eliminar archivo físico
-    const filePath = path.join(process.cwd(), 'uploads', foto.nombre);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+    // Eliminar archivo del storage
+    await this.storageService.delete(foto.nombre);
 
     await this.fotoRepository.remove(foto);
     return { message: 'Foto eliminada exitosamente' };
@@ -65,10 +66,7 @@ export class FotosService {
     const fotos = await this.findByPlanta(plantaId);
 
     for (const foto of fotos) {
-      const filePath = path.join(process.cwd(), 'uploads', foto.nombre);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      await this.storageService.delete(foto.nombre);
     }
 
     await this.fotoRepository.remove(fotos);

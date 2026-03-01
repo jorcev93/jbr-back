@@ -30,10 +30,13 @@ async function bootstrap() {
   // Exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Static files for uploads
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
-  });
+  // Static files for uploads (solo en modo local)
+  const storageType = process.env.STORAGE_TYPE || 'local';
+  if (storageType === 'local') {
+    app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+      prefix: '/uploads/',
+    });
+  }
 
   // Swagger configuration
   const config = new DocumentBuilder()

@@ -19,9 +19,7 @@ import {
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { memoryStorage } from 'multer';
 import { FotosService } from './fotos.service';
 import { CreateFotoDto } from './dto';
 import { UuidValidationPipe } from '../../common/pipes/uuid-validation.pipe';
@@ -55,13 +53,7 @@ export class FotosController {
   })
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, callback) => {
-          const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
-          callback(null, uniqueName);
-        },
-      }),
+      storage: memoryStorage(),
     }),
   )
   create(
