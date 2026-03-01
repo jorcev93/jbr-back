@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Planta } from './entities/planta.entity';
@@ -13,8 +18,12 @@ export class PlantasService {
   ) {}
 
   async create(createPlantaDto: CreatePlantaDto) {
-    const planta = this.plantaRepository.create(createPlantaDto);
-    return this.plantaRepository.save(planta);
+    try {
+      const planta = this.plantaRepository.create(createPlantaDto);
+      return await this.plantaRepository.save(planta);
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   async findAll(paginationDto: PaginationDto, seccionId?: string) {
@@ -84,7 +93,11 @@ export class PlantasService {
   async update(id: string, updatePlantaDto: UpdatePlantaDto) {
     const planta = await this.findOne(id);
     Object.assign(planta, updatePlantaDto);
-    return this.plantaRepository.save(planta);
+    try {
+      return await this.plantaRepository.save(planta);
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   async remove(id: string) {
@@ -104,5 +117,15 @@ export class PlantasService {
         { term: `%${term}%` },
       )
       .getMany();
+  }
+
+  private handleDBExceptions(error: any) {
+    if (error.code === '23505') {
+      throw new BadRequestException('Ya existe una planta con este nombre científico');
+    }
+    console.error(error);
+    throw new InternalServerErrorException(
+      'Error inesperado, comuníquese con el administrador',
+    );
   }
 }

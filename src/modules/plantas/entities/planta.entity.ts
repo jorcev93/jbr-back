@@ -19,7 +19,7 @@ import { ApiProperty } from '@nestjs/swagger';
 @Entity('plantas')
 export class Planta extends BaseEntity {
   @ApiProperty({ example: 'Rosa gallica' })
-  @Column()
+  @Column({ unique: true })
   nombreCientifico!: string;
 
   @ApiProperty({ example: 'Rosa silvestre' })
