@@ -38,6 +38,7 @@ export class PlantasService {
       .leftJoinAndSelect('planta.morfologia', 'morfologia')
       .leftJoinAndSelect('planta.registrosIngreso', 'registrosIngreso')
       .leftJoinAndSelect('registrosIngreso.persona', 'persona')
+      .leftJoinAndSelect('planta.fotos', 'fotos')
       .where('planta.estado = :estado', { estado: true })
       .take(limit)
       .skip(offset);
@@ -111,6 +112,7 @@ export class PlantasService {
     return this.plantaRepository
       .createQueryBuilder('planta')
       .leftJoinAndSelect('planta.seccion', 'seccion')
+      .leftJoinAndSelect('planta.fotos', 'fotos')
       .where('planta.estado = :estado', { estado: true })
       .andWhere(
         '(planta.nombreCientifico ILIKE :term OR planta.nombreComun ILIKE :term)',
@@ -119,7 +121,7 @@ export class PlantasService {
       .getMany();
   }
 
-  private handleDBExceptions(error: any) {
+  private handleDBExceptions(error: any): never {
     if (error.code === '23505') {
       throw new BadRequestException('Ya existe una planta con este nombre científico');
     }
