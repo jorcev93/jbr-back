@@ -16,6 +16,7 @@ import { MorfologiaModule } from './modules/morfologia/morfologia.module';
 import { FotosModule } from './modules/fotos/fotos.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { StorageModule } from './common/storage';
+import { ChatModule } from './modules/chat/chat.module';
 
 // Guards
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -51,6 +52,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     FotosModule,
     SeedModule,
     StorageModule,
+    ChatModule,
   ],
   providers: [
     {
