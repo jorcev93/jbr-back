@@ -64,6 +64,12 @@ export class ChatController {
     return this.chatService.deleteConversation(id, user.id);
   }
 
+  @Delete('conversations')
+  @ApiOperation({ summary: 'Eliminar todas las conversaciones del usuario' })
+  deleteAllConversations(@GetUser() user: Cuenta) {
+    return this.chatService.deleteAllConversations(user.id);
+  }
+
   @Post('conversations/:id/messages')
   @ApiOperation({ summary: 'Enviar mensaje (sin streaming)' })
   @ApiConsumes('multipart/form-data')
