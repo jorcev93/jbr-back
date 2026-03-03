@@ -33,7 +33,7 @@ async function bootstrap() {
   // Static files for uploads (solo en modo local)
   const storageType = process.env.STORAGE_TYPE || 'local';
   if (storageType === 'local') {
-    app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    app.useStaticAssets(join(process.cwd(), 'uploads'), {
       prefix: '/uploads/',
     });
   }
