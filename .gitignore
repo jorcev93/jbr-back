@@ -33,6 +33,12 @@ uploads
 .settings/
 *.sublime-workspace
 
+# Data
+data/
+jbre/
+scripts/
+instrucciones_seed_claude.md
+
 # IDE - VSCode
 .vscode/*
 !.vscode/settings.json
