@@ -18,6 +18,11 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
+jbre
+data
+scripts
+instrucciones_seed_claude.md
+uploads
 
 # IDEs and editors
 /.idea

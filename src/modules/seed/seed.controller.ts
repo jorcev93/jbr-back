@@ -34,4 +34,19 @@ export class SeedController {
   clearDatabase() {
     return this.seedService.clearDatabase();
   }
+
+  @Public()
+  @Post('jbre')
+  @ApiOperation({
+    summary: 'Seed del Jardín Botánico Reinaldo Espinosa',
+    description:
+      'Carga las 1069 plantas del Jardín Botánico Reinaldo Espinosa con toda su información taxonómica, morfológica, condiciones de cultivo y datos generales.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Seed JBRE ejecutado correctamente',
+  })
+  runJBRE() {
+    return this.seedService.runJBRE();
+  }
 }

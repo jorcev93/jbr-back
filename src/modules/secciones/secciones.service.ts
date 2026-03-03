@@ -35,6 +35,12 @@ export class SeccionesService {
     return seccion;
   }
 
+  async findByName(nombre: string) {
+    return this.seccionRepository.findOne({
+      where: { nombre, estado: true },
+    });
+  }
+
   async update(id: string, updateSeccionDto: UpdateSeccionDto) {
     const seccion = await this.findOne(id);
     Object.assign(seccion, updateSeccionDto);
