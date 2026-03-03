@@ -89,6 +89,20 @@ export class ChatService {
     await this.conversationRepository.save(conversation);
   }
 
+  async deleteAllConversations(userId: string): Promise<void> {
+    const conversations = await this.conversationRepository.find({
+      where: { userId, estado: true },
+    });
+
+    if (conversations.length > 0) {
+      const conversationsToUpdate = conversations.map(c => ({
+        ...c,
+        estado: false,
+      }));
+      await this.conversationRepository.save(conversationsToUpdate);
+    }
+  }
+
   async saveUserMessage(
     conversationId: string,
     content: string,
