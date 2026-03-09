@@ -15,6 +15,7 @@ import { DatosGeneralesService } from '../datos-generales/datos-generales.servic
 import { CondicionCultivoService } from '../condicion-cultivo/condicion-cultivo.service';
 import { MorfologiaService } from '../morfologia/morfologia.service';
 import { RegistroIngresoService } from '../registro-ingreso/registro-ingreso.service';
+import { RAGService, PlantSyncSubscriber } from '../rag';
 import { initialPlantasCompleta } from './data/plantas.seed';
 
 const ROLES_SEED = ['admin', 'user'] as const;
@@ -41,6 +42,8 @@ export class SeedService {
     private readonly condicionCultivoService: CondicionCultivoService,
     private readonly morfologiaService: MorfologiaService,
     private readonly registroIngresoService: RegistroIngresoService,
+    private readonly ragService: RAGService,
+    private readonly plantSyncSubscriber: PlantSyncSubscriber,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -63,6 +66,9 @@ export class SeedService {
   }
 
   async run() {
+    // Pausar sincronización automática durante el seed
+    this.plantSyncSubscriber.pause();
+
     const email: string =
       this.configService.get<string>('SEED_ADMIN_EMAIL') || 'jorge@test.com';
     const password: string =
@@ -116,6 +122,13 @@ export class SeedService {
 
     const plantasSeeded = await this.seedPlantas(personaGuardada.id);
 
+    // Sincronizar embeddings para RAG
+    this.logger.log('Sincronizando embeddings para RAG...');
+    const ragResult = await this.ragService.syncAllPlantEmbeddings();
+
+    // Reanudar sincronización automática
+    this.plantSyncSubscriber.resume();
+
     return {
       message:
         'Seed ejecutado correctamente. Roles (admin, user), usuario administrador y plantas de prueba creados.',
@@ -125,6 +138,8 @@ export class SeedService {
         rol: ROL_ADMIN,
       },
       plantasInsertadas: plantasSeeded,
+      embeddingsSincronizados: ragResult.synced,
+      embeddingsErrores: ragResult.errors,
     };
   }
 
@@ -215,6 +230,9 @@ export class SeedService {
    * Carga plantas usando dataset normalizado
    */
   async runJBRE() {
+    // Pausar sincronización automática durante el seed
+    this.plantSyncSubscriber.pause();
+
     this.logger.log('Iniciando seed del Jardín Botánico Reinaldo Espinosa desde JSON unificado...');
 
     const email: string =
@@ -283,11 +301,20 @@ export class SeedService {
 
     const result = await this.seedPlantasJBRE(seedPlantasData, adminPersonaId);
 
+    // Sincronizar embeddings para RAG
+    this.logger.log('Sincronizando embeddings para RAG...');
+    const ragResult = await this.ragService.syncAllPlantEmbeddings();
+
+    // Reanudar sincronización automática
+    this.plantSyncSubscriber.resume();
+
     return {
       message: 'Seed JBRE ejecutado correctamente.',
       plantasInsertadas: result.insertCount,
       erroresProcesando: result.errores,
-      colectoresCreados: result.colectoresCount
+      colectoresCreados: result.colectoresCount,
+      embeddingsSincronizados: ragResult.synced,
+      embeddingsErrores: ragResult.errors,
     };
   }
 

@@ -12,17 +12,19 @@ import { DatosGeneralesModule } from '../datos-generales/datos-generales.module'
 import { CondicionCultivoModule } from '../condicion-cultivo/condicion-cultivo.module';
 import { MorfologiaModule } from '../morfologia/morfologia.module';
 import { RegistroIngresoModule } from '../registro-ingreso/registro-ingreso.module';
+import { RAGModule } from '../rag';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Rol, Persona, Cuenta]), 
+    TypeOrmModule.forFeature([Rol, Persona, Cuenta]),
     PlantasModule,
     SeccionesModule,
     TaxonomiaModule,
     DatosGeneralesModule,
     CondicionCultivoModule,
     MorfologiaModule,
-    RegistroIngresoModule
+    RegistroIngresoModule,
+    RAGModule,
   ],
   controllers: [SeedController],
   providers: [SeedService],
