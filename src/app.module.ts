@@ -17,6 +17,8 @@ import { FotosModule } from './modules/fotos/fotos.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { StorageModule } from './common/storage';
 import { ChatModule } from './modules/chat/chat.module';
+import { AIProviderModule } from './modules/ai-provider';
+import { RAGModule } from './modules/rag';
 
 // Guards
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -40,6 +42,10 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
         synchronize: configService.get('NODE_ENV') !== 'production',
       }),
     }),
+    // AI y RAG (global)
+    AIProviderModule,
+    RAGModule,
+    // Módulos de negocio
     AuthModule,
     UsuariosModule,
     SeccionesModule,
