@@ -74,8 +74,9 @@ export class OpenAICompatibleProvider extends BaseAIProvider {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.role === 'user') {
         const content: Array<
-          { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }
-        > = [{ type: 'text', text: lastMessage.content as string }];
+          | { type: 'text'; text: string }
+          | { type: 'image_url'; image_url: { url: string } }
+        > = [{ type: 'text', text: lastMessage.content }];
 
         for (const attachment of attachments) {
           content.push({
@@ -94,7 +95,13 @@ export class OpenAICompatibleProvider extends BaseAIProvider {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      let finalUrl = `${this.baseUrl}/chat/completions`;
+      if (this.providerType === 'azure') {
+        const apiVersion = process.env.AI_API_VERSION || '2025-01-01-preview';
+        finalUrl = `${this.baseUrl}/chat/completions?api-version=${apiVersion}`;
+      }
+
+      const response = await fetch(finalUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +110,7 @@ export class OpenAICompatibleProvider extends BaseAIProvider {
           ...(this.providerType === 'azure' && { 'api-key': this.apiKey }),
         },
         body: JSON.stringify({
-          model: this.modelName,
+          ...(this.providerType !== 'azure' && { model: this.modelName }),
           messages,
           stream: true,
         }),
@@ -139,7 +146,9 @@ export class OpenAICompatibleProvider extends BaseAIProvider {
             if (data === '[DONE]') continue;
 
             try {
-              const parsed = JSON.parse(data);
+              const parsed = JSON.parse(data) as {
+                choices?: Array<{ delta?: { content?: string } }>;
+              };
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 yield content;
@@ -214,11 +223,19 @@ export class OpenAICompatibleEmbeddingsProvider extends BaseEmbeddingsProvider {
 
   async generateEmbeddings(texts: string[]): Promise<number[][]> {
     if (!this.isConfigured()) {
-      throw new Error(`Embeddings provider ${this.providerType} no configurado`);
+      throw new Error(
+        `Embeddings provider ${this.providerType} no configurado`,
+      );
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/embeddings`, {
+      let finalUrl = `${this.baseUrl}/embeddings`;
+      if (this.providerType === 'azure') {
+        const apiVersion = process.env.EMBEDDINGS_API_VERSION || '2023-05-15';
+        finalUrl = `${this.baseUrl}/embeddings?api-version=${apiVersion}`;
+      }
+
+      const response = await fetch(finalUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,7 +243,8 @@ export class OpenAICompatibleEmbeddingsProvider extends BaseEmbeddingsProvider {
           ...(this.providerType === 'azure' && { 'api-key': this.apiKey }),
         },
         body: JSON.stringify({
-          model: this.modelName,
+          ...(this.providerType !== 'azure' && { model: this.modelName }),
+          ...(this.dimensions && { dimensions: Number(this.dimensions) }),
           input: texts,
         }),
       });
@@ -236,10 +254,10 @@ export class OpenAICompatibleEmbeddingsProvider extends BaseEmbeddingsProvider {
         throw new Error(`Error de API: ${response.status} - ${errorText}`);
       }
 
-      const data = await response.json();
-      return data.data.map(
-        (item: { embedding: number[] }) => item.embedding,
-      );
+      const data = (await response.json()) as {
+        data: Array<{ embedding: number[] }>;
+      };
+      return data.data.map((item) => item.embedding);
     } catch (error) {
       this.logger.error('Error al generar embeddings:', error);
       throw error;

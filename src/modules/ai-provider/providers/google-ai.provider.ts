@@ -85,11 +85,17 @@ export class GoogleAIProvider extends BaseAIProvider {
     attachments?: MessageAttachment[],
   ): Array<{
     role: string;
-    parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+    parts: Array<{
+      text?: string;
+      inlineData?: { mimeType: string; data: string };
+    }>;
   }> {
     const contents: Array<{
       role: string;
-      parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+      parts: Array<{
+        text?: string;
+        inlineData?: { mimeType: string; data: string };
+      }>;
     }> = [];
 
     // Agregar historial
