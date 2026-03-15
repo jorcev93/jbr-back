@@ -1,7 +1,8 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get } from '@nestjs/common';
+import { Controller, Post, Patch, Body, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, ChangePasswordDto } from './dto';
+import { UpdatePersonaDto } from '../usuarios/dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { Cuenta } from '../usuarios/entities/cuenta.entity';
@@ -54,6 +55,28 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Todas las sesiones cerradas' })
   logoutAll(@GetUser() user: Cuenta) {
     return this.authService.logoutAll(user.id);
+  }
+
+  @Patch('change-password')
+  @ApiOperation({ summary: 'Cambiar contraseña' })
+  @ApiResponse({ status: 200, description: 'Contraseña actualizada exitosamente' })
+  @ApiResponse({ status: 401, description: 'Contraseña actual incorrecta' })
+  changePassword(
+    @GetUser() user: Cuenta,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(user.id, changePasswordDto);
+  }
+
+  @Patch('update-profile')
+  @ApiOperation({ summary: 'Actualizar nombre y apellido del perfil' })
+  @ApiResponse({ status: 200, description: 'Perfil actualizado exitosamente' })
+  @ApiResponse({ status: 401, description: 'No autenticado' })
+  updateProfile(
+    @GetUser() user: Cuenta,
+    @Body() updateProfileDto: UpdatePersonaDto,
+  ) {
+    return this.authService.updateProfile(user.personaId, updateProfileDto);
   }
 
   @Get('check-status')

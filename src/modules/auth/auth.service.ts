@@ -12,7 +12,8 @@ import { Cuenta } from '../usuarios/entities/cuenta.entity';
 import { Persona } from '../usuarios/entities/persona.entity';
 import { Rol } from '../usuarios/entities/rol.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
-import { RegisterDto, LoginDto } from './dto';
+import { RegisterDto, LoginDto, ChangePasswordDto } from './dto';
+import { UpdatePersonaDto } from '../usuarios/dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -141,6 +142,59 @@ export class AuthService {
     );
 
     return { message: 'Sesión cerrada exitosamente' };
+  }
+
+  async changePassword(cuentaId: string, dto: ChangePasswordDto) {
+    const cuenta = await this.cuentaRepository.findOne({
+      where: { id: cuentaId, estado: true },
+    });
+
+    if (!cuenta) {
+      throw new UnauthorizedException('Cuenta no encontrada');
+    }
+
+    const isValid = await bcrypt.compare(dto.currentPassword, cuenta.password);
+    if (!isValid) {
+      throw new UnauthorizedException('La contraseña actual es incorrecta');
+    }
+
+    const hashed = await bcrypt.hash(dto.newPassword, 10);
+    await this.cuentaRepository.update(cuentaId, { password: hashed });
+
+    return { message: 'Contraseña actualizada exitosamente' };
+  }
+
+  async updateProfile(personaId: string, dto: UpdatePersonaDto) {
+    const { esAutor: _a, esColector: _c, rolId: _r, ...rest } = dto;
+
+    const allowedFields: Partial<{
+      nombre: string;
+      apellido: string;
+      genero: string;
+      fechaNacimiento: Date;
+    }> = {};
+
+    if (rest.nombre !== undefined) allowedFields.nombre = rest.nombre;
+    if (rest.apellido !== undefined) allowedFields.apellido = rest.apellido;
+    if (rest.genero !== undefined) allowedFields.genero = rest.genero;
+    if (rest.fechaNacimiento !== undefined)
+      allowedFields.fechaNacimiento = new Date(rest.fechaNacimiento);
+
+    if (Object.keys(allowedFields).length === 0) {
+      return { message: 'No se enviaron campos para actualizar', persona: null };
+    }
+
+    await this.personaRepository.update(personaId, allowedFields);
+
+    const persona = await this.personaRepository.findOne({
+      where: { id: personaId },
+      select: { id: true, nombre: true, apellido: true, genero: true, fechaNacimiento: true },
+    });
+
+    return {
+      message: 'Perfil actualizado exitosamente',
+      persona,
+    };
   }
 
   async logoutAll(cuentaId: string) {
