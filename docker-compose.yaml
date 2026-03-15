@@ -11,3 +11,4 @@ services:
     container_name: jbre-db
     volumes:
       - ./postgres:/var/lib/postgresql/data
+    command: bash -c "rm -f /var/lib/postgresql/data/postmaster.pid && docker-entrypoint.sh postgres"
