@@ -479,4 +479,45 @@ export class RAGService implements OnModuleInit {
 
     return `INFORMACIÓN DE LA BASE DE DATOS DEL JARDÍN BOTÁNICO:\n\n${contextParts.join('\n\n')}`;
   }
+
+  /**
+   * Consulta estadísticas agregadas reales de la BD:
+   * total de plantas, plantas por sección, total de individuos.
+   */
+  async getAggregateStats(): Promise<string> {
+    const [totalPlantas, porSeccion, totIndividuos] = await Promise.all([
+      this.plantaRepository.count({ where: { estado: true } }),
+
+      this.dataSource.query(`
+        SELECT
+          COALESCE(s.nombre, 'Sin sección') AS seccion,
+          COUNT(p.id)::int                  AS total
+        FROM plantas p
+        LEFT JOIN secciones s ON p."seccionId" = s.id
+        WHERE p.estado = true
+        GROUP BY s.nombre
+        ORDER BY total DESC
+      `),
+
+      this.dataSource.query(`
+        SELECT COALESCE(SUM(dg."numeroIndividuos"), 0)::int AS total
+        FROM datos_generales dg
+        INNER JOIN plantas p ON dg."plantaId" = p.id
+        WHERE p.estado = true
+      `),
+    ]);
+
+    const seccionesLines = (porSeccion as { seccion: string; total: number }[])
+      .map((r) => `  - ${r.seccion}: ${r.total} plantas`)
+      .join('\n');
+
+    const totalIndividuos = (totIndividuos as { total: number }[])[0]?.total ?? 0;
+
+    return [
+      `ESTADÍSTICAS REALES DE LA BASE DE DATOS DEL JARDÍN BOTÁNICO:`,
+      `- Total de especies/registros de plantas: ${totalPlantas}`,
+      `- Total de individuos registrados: ${totalIndividuos}`,
+      `- Distribución por sección:\n${seccionesLines}`,
+    ].join('\n');
+  }
 }

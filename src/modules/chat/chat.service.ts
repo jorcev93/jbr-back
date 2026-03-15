@@ -8,7 +8,7 @@ import { Repository, In, MoreThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Conversation } from './entities/conversation.entity';
 import { Message, MessageRole } from './entities/message.entity';
-import { GeminiService } from './gemini.service';
+import { AssistantService } from './assistant.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { Cuenta } from '../usuarios/entities/cuenta.entity';
 
@@ -22,7 +22,7 @@ export class ChatService {
     private conversationRepository: Repository<Conversation>,
     @InjectRepository(Message)
     private messageRepository: Repository<Message>,
-    private geminiService: GeminiService,
+    private assistantService: AssistantService,
     private configService: ConfigService,
   ) {
     this.maxMessagesStored = this.configService.get(
@@ -199,7 +199,7 @@ export class ChatService {
   ): AsyncGenerator<string> {
     const context = await this.getContextMessages(conversationId);
 
-    for await (const chunk of this.geminiService.generateStreamResponse(
+    for await (const chunk of this.assistantService.generateStreamResponse(
       context,
       userMessage,
       attachments,

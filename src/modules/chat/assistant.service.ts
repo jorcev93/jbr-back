@@ -4,8 +4,8 @@ import { AIProviderService, ChatMessage } from '../ai-provider';
 import { RAGService } from '../rag';
 
 @Injectable()
-export class GeminiService implements OnModuleInit {
-  private readonly logger = new Logger(GeminiService.name);
+export class AssistantService implements OnModuleInit {
+  private readonly logger = new Logger(AssistantService.name);
 
   constructor(
     private configService: ConfigService,
@@ -15,7 +15,7 @@ export class GeminiService implements OnModuleInit {
 
   onModuleInit() {
     if (this.aiProvider.isConfigured()) {
-      this.logger.log('GeminiService inicializado con AIProvider');
+      this.logger.log('AssistantService inicializado con AIProvider');
     } else {
       this.logger.warn(
         'AIProvider no configurado. El servicio de chat no funcionará.',
@@ -54,7 +54,7 @@ INSTRUCCIONES IMPORTANTES SOBRE LA INFORMACIÓN DE LA BASE DE DATOS:
 - A continuación se te proporciona información EXACTA de la base de datos del jardín botánico.
 - DEBES basar tu respuesta estricta y EXCLUSIVAMENTE en la información proporcionada a continuación.
 - NO inventes nombres comunes ni ubicaciones que no estén textualmente escritas en la información a continuación.
-- OBLIGATORIO: Redacta tu respuesta de manera natural, conversacional y fluida. 
+- OBLIGATORIO: Redacta tu respuesta de manera natural, conversacional y fluida.
 - NUNCA uses listas numeradas o viñetas a menos que el usuario te pida explícitamente una lista.
 - Si el contexto tiene la respuesta (ej. un nombre común como "Pena-pena"), da la respuesta directamente sin agregar comentarios adicionales sobre lo que "no se menciona".
 - OBLIGATORIO: Si todo el contexto extraído NO contiene información para responder a la pregunta, entonces (y solo entonces) responde que no tienes esa información registrada en la base de datos.
@@ -76,6 +76,30 @@ responde exactamente: La informacion requerida no se encuentra registrada en la 
   }
 
   /**
+   * Detecta si la pregunta solicita datos estadísticos/agregados
+   * que requieren una consulta real a la BD en lugar de búsqueda semántica.
+   */
+  private isAggregateQuery(query: string): boolean {
+    const patterns = [
+      /cu[aá]ntas?\s+plantas/i,
+      /total\s+de\s+plantas/i,
+      /cu[aá]ntos?\s+individuos/i,
+      /total\s+de\s+individuos/i,
+      /cu[aá]ntas?\s+especies/i,
+      /cu[aá]ntas?\s+secciones/i,
+      /listado?\s+de\s+secciones/i,
+      /inventario\s+total/i,
+      /total\s+del\s+jard[ií]n/i,
+      /plantas\s+(tiene|hay|existen)\s+(el|en\s+el)\s+jard[ií]n/i,
+      /jard[ií]n\s+(tiene|cuenta\s+con)\s+cu[aá]ntas/i,
+      /contar\s+plantas/i,
+      /n[uú]mero\s+(total\s+)?de\s+plantas/i,
+      /cu[aá]ntas?\s+plantas\s+est[aá]n?\s+(registradas?|en\s+la\s+(base\s+de\s+datos|db))/i,
+    ];
+    return patterns.some((p) => p.test(query));
+  }
+
+  /**
    * Genera respuesta en streaming usando RAG + AI Provider
    */
   async *generateStreamResponse(
@@ -89,8 +113,13 @@ responde exactamente: La informacion requerida no se encuentra registrada en la 
     }
 
     try {
-      // Buscar contexto relevante en la base de datos (RAG)
-      const ragContext = await this.ragService.buildContext(userMessage);
+      // Si la pregunta es estadística/agregada, usar datos reales de la BD
+      let ragContext: string;
+      if (this.isAggregateQuery(userMessage)) {
+        ragContext = await this.ragService.getAggregateStats();
+      } else {
+        ragContext = await this.ragService.buildContext(userMessage);
+      }
 
       // Construir historial en formato ChatMessage
       const chatHistory: ChatMessage[] = history.map((msg) => ({
