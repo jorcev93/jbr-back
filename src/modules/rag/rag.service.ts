@@ -481,6 +481,71 @@ export class RAGService implements OnModuleInit {
   }
 
   /**
+   * Consulta información pública de donantes y las plantas que donaron.
+   * Solo expone: nombre, apellido, esAutor, esColector y datos del registro.
+   */
+  async getDonorInfo(): Promise<string> {
+    const rows = await this.dataSource.query(`
+      SELECT
+        p.nombre,
+        p.apellido,
+        pl."nombreCientifico",
+        pl."nombreComun",
+        ri.cantidad,
+        ri."fechaIngreso",
+        ri.observaciones
+      FROM registros_ingreso ri
+      INNER JOIN personas p ON ri."personaId" = p.id
+      INNER JOIN plantas pl ON ri."plantaId" = pl.id
+      WHERE pl.estado = true
+        AND p."esColector" = false
+        AND p."esAutor" = false
+      ORDER BY p.apellido, p.nombre, ri."fechaIngreso"
+    `);
+
+    if (!rows || rows.length === 0) {
+      return 'No hay registros de donaciones en la base de datos.';
+    }
+
+    // Agrupar por persona
+    const byPerson = new Map<string, { meta: string; plantas: string[] }>();
+    for (const r of rows as {
+      nombre: string;
+      apellido: string;
+      nombreCientifico: string;
+      nombreComun: string | null;
+      cantidad: number;
+      fechaIngreso: string;
+      observaciones: string | null;
+    }[]) {
+      const key = `${r.apellido}, ${r.nombre}`;
+      if (!byPerson.has(key)) {
+        byPerson.set(key, { meta: `${r.nombre} ${r.apellido}`, plantas: [] });
+      }
+      const fecha = r.fechaIngreso
+        ? new Date(r.fechaIngreso).toLocaleDateString('es-EC')
+        : 'fecha desconocida';
+      const plantaNombre = r.nombreComun
+        ? `${r.nombreCientifico} (${r.nombreComun})`
+        : r.nombreCientifico;
+      let detalle = `${plantaNombre}, cantidad: ${r.cantidad}, fecha: ${fecha}`;
+      if (r.observaciones) detalle += `, observaciones: ${r.observaciones}`;
+      byPerson.get(key)!.plantas.push(detalle);
+    }
+
+    const lines: string[] = ['DONANTES REGISTRADOS EN EL JARDÍN BOTÁNICO:'];
+    for (const { meta, plantas } of byPerson.values()) {
+      lines.push(`\nPersona: ${meta}`);
+      lines.push(`  Plantas donadas:`);
+      for (const p of plantas) {
+        lines.push(`    - ${p}`);
+      }
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
    * Consulta estadísticas agregadas reales de la BD:
    * total de plantas, plantas por sección, total de individuos.
    */

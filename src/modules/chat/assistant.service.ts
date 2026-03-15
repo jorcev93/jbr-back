@@ -76,6 +76,25 @@ responde exactamente: La informacion requerida no se encuentra registrada en la 
   }
 
   /**
+   * Detecta si la pregunta es sobre donantes/personas que donaron plantas.
+   */
+  private isDonorQuery(query: string): boolean {
+    const patterns = [
+      /donan(te|tes|do|dos|daron|dó)/i,
+      /person[ao]s?\s+(que\s+)?(han?\s+)?(donado|donaron|entregaron|aportaron)/i,
+      /cu[aá]ntas?\s+person[ao]s?\s+(han?\s+)?(donado|donaron|aportaron|entregaron)/i,
+      /qui[eé]n(es)?\s+(don[oó]|ha[n]?\s+donado|entreg[oó]|aport[oó])/i,
+      /plantas?\s+(donadas?|entregadas?|aportadas?)/i,
+      /registro[s]?\s+de\s+(ingreso|donaci[oó]n)/i,
+      /ingreso[s]?\s+de\s+plantas/i,
+      /fecha[s]?\s+(de\s+)?(donaci[oó]n|ingreso|donad[ao])/i,
+      /cu[aá]ndo\s+(se\s+)?(don[oó]|ingres[oó]|entreg[oó])/i,
+      /qui[eé]n(es)?\s+(proporcion[oó]|trajo|trajeron)/i,
+    ];
+    return patterns.some((p) => p.test(query));
+  }
+
+  /**
    * Detecta si la pregunta solicita datos estadísticos/agregados
    * que requieren una consulta real a la BD en lugar de búsqueda semántica.
    */
@@ -113,9 +132,11 @@ responde exactamente: La informacion requerida no se encuentra registrada en la 
     }
 
     try {
-      // Si la pregunta es estadística/agregada, usar datos reales de la BD
+      // Si la pregunta es estadística/agregada o sobre donantes, usar datos reales de la BD
       let ragContext: string;
-      if (this.isAggregateQuery(userMessage)) {
+      if (this.isDonorQuery(userMessage)) {
+        ragContext = await this.ragService.getDonorInfo();
+      } else if (this.isAggregateQuery(userMessage)) {
         ragContext = await this.ragService.getAggregateStats();
       } else {
         ragContext = await this.ragService.buildContext(userMessage);
